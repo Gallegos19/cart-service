@@ -53,6 +53,9 @@ pipeline {
                         pm2_name = "${env.ACTUAL_BRANCH}-health"
 
                         sh """
+                        echo "📂 Asegurando que el directorio remoto existe..."
+                        ssh -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$EC2_USER@$ip" "mkdir -p '$REMOTE_PATH'"
+
                         echo "Subiendo archivo de entorno a $EC2_USER@$ip:$REMOTE_PATH/.env.temp"
                         scp -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$ENV_FILE" "$EC2_USER@$ip:$REMOTE_PATH/.env.temp"
 
