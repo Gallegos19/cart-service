@@ -80,16 +80,21 @@ pipeline {
                             fi
 
                             echo "📁 Verificando carpeta de app..."
-                            if [ ! -d "$REMOTE_PATH/.git" ]; then
-                                git clone https://github.com/Gallegos19/cart-service.git $REMOTE_PATH
+                            if [ -d "$REMOTE_PATH/.git" ]; then
+                                echo "📥 Carpeta .git encontrada, haciendo pull..."
+                                cd $REMOTE_PATH &&
+                                git reset --hard &&
+                                git pull origin ${env.ACTUAL_BRANCH}
+                            else
+                                echo "📥 Carpeta .git no encontrada, clonando repositorio..."
+                                git clone -b ${env.ACTUAL_BRANCH} https://github.com/Gallegos19/cart-service.git $REMOTE_PATH
                             fi
 
                             echo "📋 Actualizando .env..."
                             cp $REMOTE_PATH/.env.temp $REMOTE_PATH/.env && rm $REMOTE_PATH/.env.temp
 
-                            echo "🔁 Pull y deploy..."
+                            echo "🔁 Instalando dependencias..."
                             cd $REMOTE_PATH &&
-                            git pull origin ${env.ACTUAL_BRANCH} &&
                             npm ci
 
                             echo "🛑 Verificando si pm2 tiene proceso activo..."
