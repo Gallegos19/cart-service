@@ -54,23 +54,22 @@ pipeline {
 
                         sh """
                         echo "📂 Asegurando que el directorio remoto existe..."
-                        ssh -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$EC2_USER@$ip" "mkdir -p '$REMOTE_PATH'"
+                        ssh -i "${ssh_key}" -o StrictHostKeyChecking=no "${EC2_USER}@${ip}" "mkdir -p '${REMOTE_PATH}'"
 
-                        echo "Subiendo archivo de entorno a $EC2_USER@$ip:$REMOTE_PATH/.env.temp"
-                        scp -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$ENV_FILE" "$EC2_USER@$ip:$REMOTE_PATH/.env.temp"
+                        echo "Subiendo archivo de entorno a ${EC2_USER}@${ip}:${REMOTE_PATH}/.env.temp"
+                        scp -i "${ssh_key}" -o StrictHostKeyChecking=no "${ENV_FILE}" "${EC2_USER}@${ip}:${REMOTE_PATH}/.env.temp"
 
-                        ssh -i $ssh_key -o StrictHostKeyChecking=no $EC2_USER@$ip '
+                        ssh -i "${ssh_key}" -o StrictHostKeyChecking=no "${EC2_USER}@${ip}" '
                             echo "🔧 Ajustando permisos en carpeta de la app..."
-                            sudo chown -R ubuntu:ubuntu $REMOTE_PATH
-                            sudo chmod -R u+rwX $REMOTE_PATH
+                            sudo chown -R ubuntu:ubuntu ${REMOTE_PATH}
+                            sudo chmod -R u+rwX ${REMOTE_PATH}
 
                             echo "📦 Actualizando sistema..."
-                            sudo apt-get update -y &&
-                            sudo apt-get upgrade -y
+                            sudo apt-get update -y
 
                             echo "📥 Verificando Node.js..."
                             if ! command -v node > /dev/null; then
-                                curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - &&
+                                curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
                                 sudo apt-get install -y nodejs
                             fi
 
@@ -79,28 +78,35 @@ pipeline {
                                 sudo npm install -g pm2
                             fi
 
-                            echo "📁 Verificando carpeta de app..."
-                            if [ -d "$REMOTE_PATH/.git" ]; then
-                                echo "📥 Carpeta .git encontrada, haciendo pull..."
-                                cd $REMOTE_PATH &&
-                                git reset --hard &&
-                                git pull origin ${env.ACTUAL_BRANCH}
-                            else
-                                echo "📥 Carpeta .git no encontrada, clonando repositorio..."
-                                git clone -b ${env.ACTUAL_BRANCH} https://github.com/Gallegos19/cart-service.git $REMOTE_PATH
+                            echo "📁 Preparando carpeta de app..."
+                            if [ -d "${REMOTE_PATH}" ]; then
+                                echo "🗑️ Eliminando carpeta existente..."
+                                rm -rf ${REMOTE_PATH}
                             fi
 
+                            echo "📥 Clonando repositorio..."
+                            git clone -b ${env.ACTUAL_BRANCH} https://github.com/Gallegos19/cart-service.git ${REMOTE_PATH}
+
                             echo "📋 Actualizando .env..."
-                            cp $REMOTE_PATH/.env.temp $REMOTE_PATH/.env && rm $REMOTE_PATH/.env.temp
+                            cp ${REMOTE_PATH}/.env.temp ${REMOTE_PATH}/.env && rm ${REMOTE_PATH}/.env.temp
 
                             echo "🔁 Instalando dependencias..."
-                            cd $REMOTE_PATH &&
-                            npm ci
+                            cd ${REMOTE_PATH}
+                            
+                            # Verificar si existe package-lock.json, si no, usar npm install
+                            if [ -f "package-lock.json" ]; then
+                                echo "📦 Usando npm ci (package-lock.json encontrado)"
+                                npm ci
+                            else
+                                echo "📦 Usando npm install (package-lock.json no encontrado)"
+                                npm install
+                            fi
 
                             echo "🛑 Verificando si pm2 tiene proceso activo..."
                             if pm2 list | grep -q ${pm2_name}; then
                                 echo "🛑 Deteniendo proceso pm2 ${pm2_name}..."
                                 pm2 stop ${pm2_name}
+                                pm2 delete ${pm2_name}
                             else
                                 echo "ℹ️ Proceso pm2 ${pm2_name} no estaba corriendo."
                             fi
