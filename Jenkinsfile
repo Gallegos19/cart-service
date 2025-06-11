@@ -97,7 +97,7 @@ pipeline {
                             fi
 
                             echo "▶️ Iniciando pm2 ${pm2_name}..."
-                            pm2 start server.js --name ${pm2_name}
+                            pm2 start src/server.js --name ${pm2_name}
 
                             echo "✅ Deploy completado."
                         '
