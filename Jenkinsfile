@@ -9,7 +9,7 @@ pipeline {
         EC2_USER = 'ubuntu'
         DEV_IP = '52.87.191.135'
         QA_IP  = '35.175.142.49'
-        PROD_IP = '3.86.162.136'
+        PROD_IP = '3.222.201.39'
         REMOTE_PATH = '/home/ubuntu/cart-service'
     }
 
@@ -53,7 +53,11 @@ pipeline {
                         pm2_name = "${env.ACTUAL_BRANCH}-health"
 
                         sh """
-                        scp -i $ssh_key -o StrictHostKeyChecking=no $ENV_FILE $EC2_USER@$ip:$REMOTE_PATH/.env.temp
+                        echo "📂 Asegurando que el directorio remoto existe..."
+                        ssh -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$EC2_USER@$ip" "mkdir -p '$REMOTE_PATH'"
+
+                        echo "Subiendo archivo de entorno a $EC2_USER@$ip:$REMOTE_PATH/.env.temp"
+                        scp -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$ENV_FILE" "$EC2_USER@$ip:$REMOTE_PATH/.env.temp"
 
                         ssh -i $ssh_key -o StrictHostKeyChecking=no $EC2_USER@$ip '
                             echo "🔧 Ajustando permisos en carpeta de la app..."
