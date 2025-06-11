@@ -9,7 +9,7 @@ pipeline {
         EC2_USER = 'ubuntu'
         DEV_IP = '52.87.191.135'
         QA_IP  = '35.175.142.49'
-        PROD_IP = '3.86.162.136'
+        PROD_IP = '3.222.201.39'
         REMOTE_PATH = '/home/ubuntu/cart-service'
     }
 
