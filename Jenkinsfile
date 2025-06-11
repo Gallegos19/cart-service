@@ -53,7 +53,8 @@ pipeline {
                         pm2_name = "${env.ACTUAL_BRANCH}-health"
 
                         sh """
-                        scp -i $ssh_key -o StrictHostKeyChecking=no $ENV_FILE $EC2_USER@$ip:$REMOTE_PATH/.env.temp
+                        echo "Subiendo archivo de entorno a $EC2_USER@$ip:$REMOTE_PATH/.env.temp"
+                        scp -i "$SSH_KEY1" -o StrictHostKeyChecking=no "$ENV_FILE" "$EC2_USER@$ip:$REMOTE_PATH/.env.temp"
 
                         ssh -i $ssh_key -o StrictHostKeyChecking=no $EC2_USER@$ip '
                             echo "🔧 Ajustando permisos en carpeta de la app..."
